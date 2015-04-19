@@ -1,0 +1,17 @@
+name: Bulldog
+main: bulldog.Bulldog
+version: 0.0.3
+author: 
+description: abc
+
+commands:
+    bulldog:
+      description: Default bulldog command.
+      usage: /<command>
+      permission: <plugin name>.help
+      permission-message: You don't have <permission>
+    bulldogarena:
+      description: Default bulldog arena command.
+      usage: /<command>
+      permission: <plugin name>.arena.help
+      permission-message: You don't have <permission>
