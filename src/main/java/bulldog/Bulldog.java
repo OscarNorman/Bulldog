@@ -6,15 +6,19 @@ import java.util.ArrayList;
 
 import lib.PatPeter.SQLibrary.SQLite;
 
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.ChatColor;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.Location;
+
 
 
 public final class Bulldog extends JavaPlugin implements Listener{
@@ -25,11 +29,78 @@ public final class Bulldog extends JavaPlugin implements Listener{
 
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e){
-			Player p = e.getPlayer();
-			Location l=p.getLocation();
-			
+		for(Arena a:activeArenas){
+			if(a.bulldogFinished()){
+				a.gameOver(this);
+			}
 		}
-	
+	}
+
+	@EventHandler
+	public void onBlockUpdate(BlockPhysicsEvent e, Entity sender){
+		for(Arena a:activeArenas){		
+			double lMinX=Math.min(a.lobbyArea1.getX(), a.lobbyArea2.getX());
+			double lMinZ=Math.min(a.lobbyArea1.getZ(), a.lobbyArea2.getZ());
+
+			double lMaxX=Math.max(a.lobbyArea1.getX(), a.lobbyArea2.getX());
+			double lMaxZ=Math.max(a.lobbyArea1.getZ(), a.lobbyArea2.getZ());
+
+			double aMinX=Math.min(a.playingArea1.getX(), a.playingArea2.getX());
+			double aMinZ=Math.min(a.playingArea1.getZ(), a.playingArea2.getZ());
+
+			double aMaxX=Math.max(a.playingArea1.getX(), a.playingArea2.getX());
+			double aMaxZ=Math.max(a.playingArea1.getZ(), a.playingArea2.getZ());
+
+			double wMinX=Math.min(a.winArea1.getX(), a.lobbyArea2.getX());
+			double wMinZ=Math.min(a.winArea1.getZ(), a.lobbyArea2.getZ());
+
+			double wMaxX=Math.max(a.winArea1.getX(), a.winArea2.getX());
+			double wMaxZ=Math.max(a.winArea1.getZ(), a.winArea2.getZ());
+			if((e.getBlock().getLocation().getX()>=aMinX&&e.getBlock().getX()<=aMaxX&&e.getBlock().getLocation().getZ()>=aMinZ&&e.getBlock().getLocation().getZ()<=aMaxZ)
+					||(e.getBlock().getLocation().getX()>=lMinX&&e.getBlock().getX()<=lMaxX&&e.getBlock().getLocation().getZ()>=lMinZ&&e.getBlock().getLocation().getZ()<=lMaxZ)
+					||(e.getBlock().getLocation().getX()>=wMinX&&e.getBlock().getX()<=wMaxX&&e.getBlock().getLocation().getZ()>=wMinZ&&e.getBlock().getLocation().getZ()<=wMaxZ)){
+				
+				if(sender instanceof Player){
+					sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.RED+" You Can't Edit Blocks In A Saved Arena!");
+				}
+				e.isCancelled();
+			
+			}
+		}
+	}
+
+
+	@EventHandler
+	public void onEntityDamage(EntityDamageEvent e){
+		if(e.getEntity() instanceof Player){	
+			Player p = (Player) e.getEntity();
+			if(e.getDamage()>=p.getHealth()){	
+				ArrayList<Arena> deadArenas = new ArrayList<Arena>();
+				for(Arena arena : activeArenas){
+					if(arena.playerPlaying(p)){
+
+						arena.restorePlayer(p,this);
+						p.setHealth(20);
+						FireTimer countdown = new FireTimer(this, arena);
+						countdown.startCountdown(1,p);
+
+						arena.playerDead(p);
+
+						if(arena.isGameOver()){
+							arena.gameOver(this);
+							deadArenas.add(arena);
+						}
+
+					}
+				}
+				activeArenas.removeAll(deadArenas);
+				e.setCancelled(true);
+			}
+
+		}
+
+	}
+
 
 	@Override
 	public void onEnable() {
@@ -87,12 +158,6 @@ public final class Bulldog extends JavaPlugin implements Listener{
 						+ "winArea2_x FLOAT,"
 						+ "winArea2_y FLOAT,"
 						+ "winArea2_z FLOAT,"
-						+ "specArea1_x FLOAT,"
-						+ "specArea1_y FLOAT,"
-						+ "specArea1_z FLOAT,"
-						+ "specArea2_x FLOAT,"
-						+ "specArea2_y FLOAT,"
-						+ "specArea2_z FLOAT,"
 						+ "lobbySpawn_x FLOAT,"
 						+ "lobbySpawn_y FLOAT,"
 						+ "lobbySpawn_z FLOAT,"
@@ -102,9 +167,6 @@ public final class Bulldog extends JavaPlugin implements Listener{
 						+ "arenaSpawn2_x FLOAT,"
 						+ "arenaSpawn2_y FLOAT,"
 						+ "arenaSpawn2_z FLOAT,"
-						+ "specSpawn_x FLOAT,"
-						+ "specSpawn_y FLOAT,"
-						+ "specSpawn_z FLOAT,"
 						+ "world VARCHAR(64));");
 
 			} catch (SQLException e) {
@@ -120,7 +182,7 @@ public final class Bulldog extends JavaPlugin implements Listener{
 
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		return CommandHandler.doCommand(sender, cmd, label,  args, sqlite,underCreation, this);
+		return CommandHandler.doCommand(sender, cmd, label,  args, sqlite, this);
 	}
 }
 

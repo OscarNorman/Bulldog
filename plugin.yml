@@ -1,17 +1,22 @@
 name: Bulldog
 main: bulldog.Bulldog
-version: 0.0.3
-author: 
-description: abc
+version: 0.1.0
+author: NeonSparked
+description: This plugin recreates the game Bulldog for Minecraft Bukkit and Spigot.
+database: true
+depend: [WorldEdit, SQLibrary]
+
 
 commands:
     bulldog:
-      description: Default bulldog command.
+      description: Gives Access to all Bulldog Commands
       usage: /<command>
-      permission: <plugin name>.help
-      permission-message: You don't have <permission>
+      default: not op
+      permission: bulldog.*
+      permission-message: You don't have <permission> 	
     bulldogarena:
-      description: Default bulldog arena command.
+      description: Gives Access to all Bulldog Arena Commands
       usage: /<command>
-      permission: <plugin name>.arena.help
+      default: op
+      permission: bulldog.arena.*
       permission-message: You don't have <permission>
