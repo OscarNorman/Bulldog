@@ -70,7 +70,7 @@ public class GameCountdown
 	}
 	public void cancel(){
 		Bukkit.getScheduler().cancelTask(this.countdownTimer);
-		arena.start();
+		arena.start(plugin);
 	}
 }
 

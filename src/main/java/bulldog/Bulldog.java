@@ -14,9 +14,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
 
@@ -37,7 +36,7 @@ public final class Bulldog extends JavaPlugin implements Listener{
 	}
 
 	@EventHandler
-	public void onBlockUpdate(BlockPhysicsEvent e, Entity sender){
+	public void PlayerEvent(PlayerInteractEvent e, Entity sender){
 		for(Arena a:activeArenas){		
 			double lMinX=Math.min(a.lobbyArea1.getX(), a.lobbyArea2.getX());
 			double lMinZ=Math.min(a.lobbyArea1.getZ(), a.lobbyArea2.getZ());
@@ -56,9 +55,9 @@ public final class Bulldog extends JavaPlugin implements Listener{
 
 			double wMaxX=Math.max(a.winArea1.getX(), a.winArea2.getX());
 			double wMaxZ=Math.max(a.winArea1.getZ(), a.winArea2.getZ());
-			if((e.getBlock().getLocation().getX()>=aMinX&&e.getBlock().getX()<=aMaxX&&e.getBlock().getLocation().getZ()>=aMinZ&&e.getBlock().getLocation().getZ()<=aMaxZ)
-					||(e.getBlock().getLocation().getX()>=lMinX&&e.getBlock().getX()<=lMaxX&&e.getBlock().getLocation().getZ()>=lMinZ&&e.getBlock().getLocation().getZ()<=lMaxZ)
-					||(e.getBlock().getLocation().getX()>=wMinX&&e.getBlock().getX()<=wMaxX&&e.getBlock().getLocation().getZ()>=wMinZ&&e.getBlock().getLocation().getZ()<=wMaxZ)){
+			if((e.getClickedBlock().getLocation().getX()>=aMinX&&e.getClickedBlock().getX()<=aMaxX&&e.getClickedBlock().getLocation().getZ()>=aMinZ&&e.getClickedBlock().getLocation().getZ()<=aMaxZ)
+					||(e.getClickedBlock().getLocation().getX()>=lMinX&&e.getClickedBlock().getX()<=lMaxX&&e.getClickedBlock().getLocation().getZ()>=lMinZ&&e.getClickedBlock().getLocation().getZ()<=lMaxZ)
+					||(e.getClickedBlock().getLocation().getX()>=wMinX&&e.getClickedBlock().getX()<=wMaxX&&e.getClickedBlock().getLocation().getZ()>=wMinZ&&e.getClickedBlock().getLocation().getZ()<=wMaxZ)){
 				
 				if(sender instanceof Player){
 					sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.RED+" You Can't Edit Blocks In A Saved Arena!");
@@ -100,6 +99,9 @@ public final class Bulldog extends JavaPlugin implements Listener{
 		}
 
 	}
+	
+	
+	
 
 
 	@Override
@@ -108,7 +110,8 @@ public final class Bulldog extends JavaPlugin implements Listener{
 		getLogger().info("Waking up...");
 		activeArenas=new ArrayList<Arena>();
 		getServer().getPluginManager().registerEvents(this,  this);
-
+		
+		this.saveDefaultConfig();		
 
 		sqlConnection();
 		sqlTableCheck();

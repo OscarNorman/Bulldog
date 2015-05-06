@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.Metadatable;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.Vector;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
@@ -55,22 +56,28 @@ public class CommandHandler {
 						if(arena==null){
 							arena=new Arena();
 							arena.load(sqlite,args[1],plugin);
+							sender.sendMessage("loading arena");
 							activeArenas.add(arena);
 						}
-						arena.players.add((Player)sender);
-						((Metadatable) sender).setMetadata("oldLocation",new FixedMetadataValue(plugin,((Player) sender).getLocation()));
+						if(sender!=null){
+							arena.players.add((Player)sender);
+							((Metadatable) sender).setMetadata("oldLocation",new FixedMetadataValue(plugin,((Player) sender).getLocation()));
 
-						ItemStack[] armour = ((Player)sender).getEquipment().getArmorContents();
-						ItemStack[] inv = ((Player)sender).getInventory().getContents();
-						((Metadatable) sender).setMetadata("armour",new FixedMetadataValue(plugin,armour)); 
-						((Metadatable) sender).setMetadata("inv",new FixedMetadataValue(plugin,inv));
-						PlayerInventory inv1 = ((Player)sender).getInventory();
-						inv1.clear();
-						inv1.setArmorContents(new ItemStack[4]);
+							ItemStack[] armour = ((Player)sender).getEquipment().getArmorContents();
+							ItemStack[] inv = ((Player)sender).getInventory().getContents();
+							((Metadatable) sender).setMetadata("armour",new FixedMetadataValue(plugin,armour)); 
+							((Metadatable) sender).setMetadata("inv",new FixedMetadataValue(plugin,inv));
+							PlayerInventory inv1 = ((Player)sender).getInventory();
+							inv1.clear();
+							inv1.setArmorContents(new ItemStack[4]);
+							((Player)sender).setFoodLevel(20);
+							((Player)sender).setHealth(20);
+							
+							
 
-						((Player) sender).teleport(arena.lobbySpawn.toLocation(arena.myWorld));
-						arena.checkStart(plugin);
-
+							((Player) sender).teleport(arena.lobbySpawn.toLocation(arena.myWorld));
+							arena.checkStart(plugin);
+						}
 
 
 
@@ -85,6 +92,10 @@ public class CommandHandler {
 				else if(args[0].equals("leave")){
 					for(Arena a:activeArenas){
 						a.leave((Player)sender, plugin);
+					}
+					ScoreboardHelper.removePlayerScoreboard((Player)sender);
+					for (PotionEffect effect : ((Player) sender).getActivePotionEffects()){
+						((Player) sender).removePotionEffect(effect.getType());
 					}
 
 				}
@@ -116,7 +127,6 @@ public class CommandHandler {
 				sender.sendMessage(ChatColor.GREEN+"/bulldog list"+ChatColor.WHITE+" Lists all working Bulldog Arenas.");
 				sender.sendMessage(ChatColor.GREEN+"/bulldog join <arena>"+ChatColor.WHITE+" Joins the specified Arena.");
 				sender.sendMessage(ChatColor.GREEN+"/bulldog leave"+ChatColor.WHITE+" Leaves the current Arena");
-				//sender.sendMessage(ChatColor.GREEN+"[Bulldog]"+ChatColor.WHITE+" Command Help:");
 			}
 			return true;
 		}
@@ -127,23 +137,23 @@ public class CommandHandler {
 			if(args.length>0){
 				if(args[0].equalsIgnoreCase("create")){
 					if(args[1]==null){
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.RED+" Please specify an arena name: /bulldogarena create <name>");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.RED+" Please specify an arena name: /bulldogarena create <name>");
 					}
 					else{
 						plugin.underCreation = new Arena();
 						plugin.underCreation.arenaName=args[1];
 						plugin.underCreation.myWorld=((Player)sender).getWorld();
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.WHITE+" Arena with name: "+args[1]+" created!");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.WHITE+" Arena with name: "+args[1]+" created!");
 					}
 				}
 
 				else if(args[0].equalsIgnoreCase("delete")){
 					if(args[1]==null){
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.RED+" Please specify an arena to be deleted: /bulldogarena delete <name>");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.RED+" Please specify an arena to be deleted: /bulldogarena delete <name>");
 					}
 					else{
 						Arena.delete(sqlite,args[1]);
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.WHITE+" Arena Deleted");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.WHITE+" Arena Deleted");
 					}
 				}
 
@@ -160,14 +170,14 @@ public class CommandHandler {
 
 						plugin.underCreation.playingArea1=min;
 						plugin.underCreation.playingArea2=max;
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.WHITE+" Arena Boundary Set!");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.WHITE+" Arena Boundary Set!");
 					}
 				}
 				else if(args[0].equalsIgnoreCase("setlobbyregion")){
 
 					Selection s = we.getSelection((Player)sender);
 					if(s==null){
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.RED+" Make a selection first!");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.RED+" Make a selection first!");
 					}
 					else{
 						Vector min = s.getMinimumPoint().toVector();
@@ -175,7 +185,7 @@ public class CommandHandler {
 
 						plugin.underCreation.lobbyArea1=min;
 						plugin.underCreation.lobbyArea2=max;
-						sender.sendMessage(ChatColor.GREEN+"[[BulldogArena]"+ChatColor.WHITE+" Lobby Boundary Set!");
+						sender.sendMessage(ChatColor.GREEN+"[BulldogArena]"+ChatColor.WHITE+" Lobby Boundary Set!");
 					}
 				}
 				else if(args[0].equalsIgnoreCase("setwinregion")){

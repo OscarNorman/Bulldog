@@ -19,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.Potion;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.Vector;
 
 
@@ -45,6 +46,8 @@ public class Arena {
 	public ArrayList<Player> bulldogFull;
 	public ArrayList<Player> chaser;
 	public ArrayList<Player> chaserFull;
+
+	private UpdateScoreboardTimer sbt;
 
 	public Boolean isPlaying(){
 		return true;
@@ -133,7 +136,11 @@ public class Arena {
 		// Teleport players out of arena, last known location
 		for(Player p : players){
 			restorePlayer(p,plugin);
-
+			p.setFoodLevel(20);
+			p.setHealth(20);
+			for (PotionEffect effect :p.getActivePotionEffects()){
+				p.removePotionEffect(effect.getType());
+			}
 		}
 		//TODO: update stats
 
@@ -154,29 +161,41 @@ public class Arena {
 			}
 
 		}
+		sbt.cancel();
 		bulldog.clear();
 		bulldogFull.clear();
 		chaser.clear();
 		chaserFull.clear();
 		players.clear();
 		playing=false;
+
+
 	}
 
 	public Boolean bulldogFinished(){
-		double minX=Math.min(winArea1.getX(), winArea2.getX());
-		double minZ=Math.min(winArea1.getZ(), winArea2.getZ());
+		if(bulldog!=null){
+			double minX=Math.min(winArea1.getX(), winArea2.getX());
+			double minZ=Math.min(winArea1.getZ(), winArea2.getZ());
 
-		double maxX=Math.max(winArea1.getX(), winArea2.getX());
-		double maxZ=Math.max(winArea1.getZ(), winArea2.getZ());
-		for(Player p:bulldog){
-			if(p.getLocation().getX()>=minX&&p.getLocation().getX()<=maxX&&p.getLocation().getZ()>=minZ&&p.getLocation().getZ()<=maxZ){
-				return true;
+			double maxX=Math.max(winArea1.getX(), winArea2.getX());
+			double maxZ=Math.max(winArea1.getZ(), winArea2.getZ());
+			for(Player p:bulldog){
+				if(p.getLocation().getX()>=minX&&p.getLocation().getX()<=maxX&&p.getLocation().getZ()>=minZ&&p.getLocation().getZ()<=maxZ){
+					return true;
+				}
 			}
 		}
 		return false;
 	}
 
-	public void start(){
+	public void start(Bulldog plugin){
+
+		if(players.size()==0){
+			gameOver(plugin);
+
+
+		}
+
 		@SuppressWarnings("unchecked")
 		ArrayList<Player> temp = (ArrayList<Player>) players.clone();
 		Random rand = new Random();
@@ -198,6 +217,9 @@ public class Arena {
 				}
 			}
 		}
+
+		sbt = new UpdateScoreboardTimer(plugin, this);
+
 		for(Player p : bulldog){
 
 			PlayerInventory inventory = p.getInventory(); 
@@ -450,8 +472,16 @@ public class Arena {
 			p.sendMessage(ChatColor.GREEN+"[Bulldog]"+ChatColor.WHITE+"Game Started! go Go GO!");
 			p.teleport(arenaSpawn2.toLocation(myWorld));
 
+
+
 		}
+		for(Player p:players){
+			ScoreboardHelper.createScoreboard(p);
+			p.setFoodLevel(20);
+		}
+		sbt.start();
 	}
+
 
 
 
@@ -565,10 +595,10 @@ public class Arena {
 				lobbyArea2=new Vector(r.getDouble(10),r.getDouble(11),r.getDouble(12));
 				winArea1=new Vector(r.getDouble(13),r.getDouble(14),r.getDouble(15));
 				winArea2=new Vector(r.getDouble(16),r.getDouble(17),r.getDouble(18));
-				lobbySpawn=new Vector(r.getDouble(25),r.getDouble(26),r.getDouble(27));
-				arenaSpawn1=new Vector(r.getDouble(28),r.getDouble(29),r.getDouble(30));
-				arenaSpawn2=new Vector(r.getDouble(31),r.getDouble(32),r.getDouble(33));
-				myWorld=p.getServer().getWorld(r.getString(37));
+				lobbySpawn=new Vector(r.getDouble(19),r.getDouble(20),r.getDouble(21));
+				arenaSpawn1=new Vector(r.getDouble(22),r.getDouble(23),r.getDouble(24));
+				arenaSpawn2=new Vector(r.getDouble(25),r.getDouble(26),r.getDouble(27));
+				myWorld=p.getServer().getWorld(r.getString(28));
 
 				voteCount = 0;
 				players=new ArrayList<Player>();
